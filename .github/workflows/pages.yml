@@ -1,0 +1,56 @@
+
+name: Publicar Click Medieval
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar arquivos do repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar ferramentas
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Extrair e preparar o jogo
+        run: |
+          mkdir -p extraido dist
+          unzip -q Click_Medieval_V5_44.zip -d extraido
+          INDEX=$(find extraido -type f -name index.html -print -quit)
+          if [ -z "$INDEX" ]; then
+            echo "Erro: index.html nao encontrado no ZIP"
+            exit 1
+          fi
+          ROOT=$(dirname "$INDEX")
+          cp -R "$ROOT"/. dist/
+          test -f dist/index.html
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Enviar arquivos para publicacao
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Publicar o jogo
+        id: deploy
+        uses: actions/deploy-pages@v4
