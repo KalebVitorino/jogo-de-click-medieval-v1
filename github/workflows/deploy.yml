@@ -1,0 +1,36 @@
+name: Descompactar e Publicar Jogo
+
+on:
+  push:
+    branches:
+      - main  # Ou o nome da sua branch principal (ex: master)
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar o código do repositório
+        uses: actions/checkout@v4
+
+      - name: Descompactar o arquivo do jogo
+        run: |
+          mkdir _site
+          unzip Click_Medieval_V5_44.zip -d _site
+          # Substitua "jogo.zip" acima pelo nome exato do seu arquivo ZIP
+
+      - name: Preparar o GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Enviar arquivos para o Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './_site'
+
+      - name: Colocar o site no ar
+        id: deployment
+        uses: actions/deploy-pages@v4
