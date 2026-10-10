@@ -1,0 +1,55 @@
+
+name: Publicar Click Medieval
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar arquivos
+        uses: actions/checkout@v4
+
+      - name: Instalar unzip
+        run: sudo apt-get update && sudo apt-get install -y unzip
+
+      - name: Extrair ZIP
+        run: |
+          mkdir extraido
+          unzip -q Click_Medieval_V5_44.zip -d extraido
+          INDEX=$(find extraido -type f -name index.html -print -quit)
+          if [ -z "$INDEX" ]; then
+            echo "index.html nao encontrado no ZIP"
+            exit 1
+          fi
+          cp -R "$(dirname "$INDEX")"/. extraido/
+
+      - name: Preparar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar arquivos do site
+        run: |
+          mkdir dist
+          INDEX=$(find extraido -type f -name index.html -print -quit)
+          cp -R "$(dirname "$INDEX")"/. dist/
+
+      - name: Enviar arquivos
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Publicar
+        uses: actions/deploy-pages@v4
